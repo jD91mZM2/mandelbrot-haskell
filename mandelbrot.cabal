@@ -12,7 +12,7 @@ bug-reports:    https://github.com/jD91mZM2/mandelbrot/issues
 author:         jD91mZM2
 maintainer:     me@krake.one
 copyright:      2020 jD91mZM2
-license:        BSD3
+license:        MIT
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
