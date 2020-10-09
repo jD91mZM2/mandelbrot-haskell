@@ -15,7 +15,7 @@ f z c = z ** 2 + c
 
 -- Return infinite list of all numbers in sequence
 nextValues :: Complex Double -> Complex Double -> [Complex Double]
-nextValues z c = [f z c] ++ nextValues (f z c) c
+nextValues z c = z:nextValues (f z c) c
 
 series :: Complex Double -> [Complex Double]
 series pos = nextValues (0 :+ 0) pos
