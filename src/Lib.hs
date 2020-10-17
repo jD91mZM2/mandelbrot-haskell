@@ -1,13 +1,14 @@
 module Lib
-    ( makeMandelbrot
+    ( Mandelbrot(..)
+    , makeMandelbrot
+    , drawMandelbrot
     ) where
 
 import Graphics.Image hiding (realPart, imagPart, scale)
-import Graphics.Image.Interface
 import Data.Complex
 
+maxDepth :: Int
 maxDepth = 200
-scale = 200
 
 -- The function to test on
 f :: Complex Double -> Complex Double -> Complex Double
@@ -28,14 +29,41 @@ mightConverge z = (realPart z) ** 2 + (imagPart z) ** 2 <= 2 ** 2
 speedOfBlowup :: Complex Double -> Int
 speedOfBlowup pos = length $ takeWhile mightConverge $ take maxDepth $ series pos
 
+-- A color value between 0 and 1, based on how quick the blowup is
+valueOf :: Complex Double -> Double
+valueOf pos = (fromIntegral $ speedOfBlowup pos) / (fromIntegral maxDepth)
+
+-- Mandelbrot settings
+data Mandelbrot = Mandelbrot
+  { width :: Int
+  , height :: Int
+  , scale :: Double
+  , x_offset :: Double
+  , y_offset :: Double
+  }
+
+makeMandelbrot :: Int -> Int -> Mandelbrot
+makeMandelbrot w h = Mandelbrot
+  { width = w
+  , height = h
+  , scale = 1
+  , x_offset = 0
+  , y_offset = 0
+  }
+
 -- Pixel coordinates to complex numer
-coordinate :: (Int, Int) -> Complex Double
-coordinate (x, y) = ((fromIntegral x) / scale) :+ ((fromIntegral y) / scale)
+coordinate :: Mandelbrot -> (Int, Int) -> Complex Double
+coordinate m (x, y) =
+  let
+    x_proportional = fromIntegral x / fromIntegral (width m)
+    y_proportional = fromIntegral y / fromIntegral (height m)
 
--- A pixel value between 0 and 1, based on how quick the blowup is
-pixelValue :: (Int, Int) -> Double
-pixelValue pos = (fromIntegral $ speedOfBlowup $ coordinate pos) / (fromIntegral maxDepth)
+    -- Instead of going from 0 to 1, go from -2 to 2
+    x_normalised = (x_proportional - 0.5) * (2 / 0.5)
+    y_normalised = (y_proportional - 0.5) * (2 / 0.5)
+  in
+    ((x_normalised - x_offset m) / scale m) :+ ((y_normalised - y_offset m) / scale m)
 
--- Make a mandelbrot image of the given size
-makeMandelbrot :: (Int, Int) -> Image VS Y Double
-makeMandelbrot (width, height) = makeImage (width, height) $ \(y, x) -> PixelY $ pixelValue (x - width `div` 2, y - height `div` 2)
+-- Make a mandelbrot image of the given size and zoom
+drawMandelbrot :: Mandelbrot -> Image VS Y Double
+drawMandelbrot m = makeImage (width m, height m) $ \(y, x) -> PixelY $ valueOf $ coordinate m (x, y)
